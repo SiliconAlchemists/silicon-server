@@ -27,7 +27,6 @@ app.get('/', (req,res) =>{
     res.send("success");
 });
 
-let obj = null;
 
 app.post('/registeruser', (req,res) =>{
     const {
@@ -47,22 +46,22 @@ app.post('/registeruser', (req,res) =>{
         special
     } = req.body;
     console.log('registeruser post name:', username);
-    obj ={
-        username,
-        email,
-        password,
-        age,
-        sex,
-        phone,
-        medcondition,
-        ilnesses,
-        address,
-        phoneemergency,
-        bloodgroup,
-        medicineintolerance,
-        medication,
-        special
-    }
+    // obj ={
+    //     username,
+    //     email,
+    //     password,
+    //     age,
+    //     sex,
+    //     phone,
+    //     medcondition,
+    //     ilnesses,
+    //     address,
+    //     phoneemergency,
+    //     bloodgroup,
+    //     medicineintolerance,
+    //     medication,
+    //     special
+    // }
     db('users').insert({
         username:username,
         email:email,
@@ -82,6 +81,26 @@ app.post('/registeruser', (req,res) =>{
     .catch( err => console.log(err));
     
     res.json(succObj);
+})
+
+app.post('/getuserdetails', (req,res) =>{
+    const {
+        email,
+    } = req.body;
+    console.log('getuserdetails post email:', email);
+    db.select('*').from('users').where({email:email}).then(user =>{
+        console.log('user quer', user);
+        if(user.length)
+        res.json(user[0]);
+        else res.status(400).json('user not found')
+    })
+})
+
+
+app.post('/test', (req,res) =>{
+    const {email} =req.body;
+    
+    res.json({email:email+"boiiiiiiiiiiii"});
 })
 
 app.listen(3006, ()=>{ 
