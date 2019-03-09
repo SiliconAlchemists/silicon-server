@@ -314,8 +314,8 @@ function calculateDistance(userLoc, driverLoc) {
 //Python ws server
 let gyroData = [];
 let gyroIntervalId;
+ 
 app.ws('/getGyro', (ws, req) => {
-
     ws.on('message', msg => {
         let messageObj = JSON.parse(msg);
         console.log("websocket getGyro received: ", messageObj);
@@ -329,9 +329,6 @@ app.ws('/getGyro', (ws, req) => {
                     ws.send(JSON.stringify(gyroDataObject));
                     gyroData = [];
                 }
-                //delete this
-                // gyroData.push(Math.random());
-
             }, 100);
         }
 
@@ -366,7 +363,7 @@ app.ws('/getGyroPhoneTest', (ws, req) => {
         // console.log("getGyroPhoneTest received: ", gyroData);
         let {x,y,z} = gyroObj;
         let magnitude =  Math.sqrt( x*x +y*y + z*z);
-        console.log(magnitude);
+        // console.log(magnitude);
         gyroData.push(magnitude);
         // let magnitude = JSON.parse(msg).magnitude;
         if(started==null){
@@ -386,6 +383,32 @@ app.ws('/getGyroPhoneTest', (ws, req) => {
 
 })
 
+
+app.ws('/signinhospital', (ws, req) => {
+
+    ws.on('message', msg => {
+       
+        console.log("websocket signinhospital received: ", JSON.parse(msg));
+        let loginDetails = JSON.parse(msg);
+        
+        db.select('*').from('hospital').where({
+            email: loginDetails.email,
+            password: loginDetails.password
+        }).then(hospital => {
+            console.log('hospital quer', hospital);
+            if (hospital.length)
+                ws.send('success');
+            else {
+                console.log("sending 404");
+                ws.send('404');
+            }
+        }).catch(error => console.log(error));
+    })
+
+    ws.on('close', () => {
+        console.log('signinhospital WebSocket was closed');
+    })
+})
 
 app.listen(3006, () => {
     console.log("Hello Silicon Alchemists, REST API cum Websockets Server Running on PORT 3006");
