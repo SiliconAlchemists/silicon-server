@@ -314,7 +314,7 @@ function calculateDistance(userLoc, driverLoc) {
 //Python ws server
 let gyroData = [];
 let gyroIntervalId;
- 
+let turn = 1;
 app.ws('/getGyro', (ws, req) => {
     ws.on('message', msg => {
         let messageObj = JSON.parse(msg);
@@ -323,10 +323,12 @@ app.ws('/getGyro', (ws, req) => {
 
             gyroIntervalId = setInterval(() => {
                 let gyroDataObject = {
-                    data: gyroData
+                    data: gyroData,
+                    turn:turn
                 };
                 if (gyroData.length >= 50) {
                     ws.send(JSON.stringify(gyroDataObject));
+                    turn++;
                     gyroData = [];
                 }
             }, 100);
