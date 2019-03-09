@@ -2,8 +2,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const knex = require('knex');
+const enableWs = require('express-ws');
+
 
 const app = express();
+enableWs(app);
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -46,22 +49,6 @@ app.post('/registeruser', (req,res) =>{
         special
     } = req.body;
     console.log('registeruser post name:', username);
-    // obj ={
-    //     username,
-    //     email,
-    //     password,
-    //     age,
-    //     sex,
-    //     phone,
-    //     medcondition,
-    //     ilnesses,
-    //     address,
-    //     phoneemergency,
-    //     bloodgroup,
-    //     medicineintolerance,
-    //     medication,
-    //     special
-    // }
     db('users').insert({
         username:username,
         email:email,
@@ -100,8 +87,61 @@ app.post('/getuserdetails', (req,res) =>{
 app.post('/test', (req,res) =>{
     const {email} =req.body;
     
-    res.json({email:email+"boiiiiiiiiiiii"});
+    res.json({email:email+" testing"});
 })
+
+
+// app.ws('/echo', (ws, req) => {
+//     ws.on('message', msg => {
+//          ws.send(JSON.stringify(succObj));
+//         console.log("websocket echo received: " , JSON.parse(msg) );
+
+//     })
+
+//     ws.on('close', () => {
+//         console.log('WebSocket was closed')
+//     })
+// })
+
+
+// app.ws('/registerws', (ws, req) => {
+//     ws.on('message', msg => {
+//          ws.send(JSON.stringify(succObj));
+//         console.log("websocket registerws received: " , JSON.parse(msg) );
+
+//     })
+
+//     ws.on('close', () => {
+//         console.log('WebSocket was closed')
+//     })
+// })
+
+app.ws('/signinws', (ws, req) => {
+
+    ws.on('open', function open() {
+        console.log("client conect");
+      });
+
+    ws.on('message', msg => {
+        //  ws.send(JSON.stringify(succObj));
+        console.log("websocket signinws received: " , JSON.parse(msg) );
+        let loginDetails =  JSON.parse(msg);
+        console.log(loginDetails.email, loginDetails.password);
+
+        db.select('*').from('users').where({email:loginDetails.email}).then(user =>{
+            console.log('user quer', user);
+            if(user.length)
+            ws.send(JSON.stringify(user[0]));
+            else ws.send('user not found');
+        }).catch(error => console.log(error));
+    })
+
+    ws.on('close', () => {
+        console.log('sigin WebSocket was closed')
+    })
+})
+
+
 
 app.listen(3006, ()=>{ 
     console.log("REST API Server Running on PORT 3006");
