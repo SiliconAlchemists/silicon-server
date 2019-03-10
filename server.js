@@ -358,14 +358,17 @@ app.ws('/getGyroPhone', (ws, req) => {
 let bi = [];
 let started=null;
 let cleartestgyro;
+let count= 0;
 app.ws('/getGyroPhoneTest', (ws, req) => {
 
     ws.on('message', msg => {
+        
         let gyroObj = JSON.parse(msg);
         // console.log("getGyroPhoneTest received: ", gyroData);
         let {x,y,z} = gyroObj;
         let magnitude =  Math.sqrt( x*x +y*y + z*z);
-        // console.log(magnitude);
+        // console.log(magnitude)
+        console.log("gyrotest", magnitude);
         gyroData.push(magnitude);
         // let magnitude = JSON.parse(msg).magnitude;
         if(started==null){
@@ -385,7 +388,7 @@ app.ws('/getGyroPhoneTest', (ws, req) => {
 
 })
 
-
+let hospitalActive = false;
 app.ws('/signinhospital', (ws, req) => {
 
     ws.on('message', msg => {
@@ -398,17 +401,41 @@ app.ws('/signinhospital', (ws, req) => {
             password: loginDetails.password
         }).then(hospital => {
             console.log('hospital quer', hospital);
-            if (hospital.length)
-                ws.send('success');
+            if (hospital.length){
+                let succObj ={
+                    'action':'success' 
+                }
+                ws.send(JSON.stringify(succObj));
+                hospitalActive = true;
+                setInterval( () =>{
+                    if(hospitalActive){
+                        if(userInDistress!=null){
+                            let obj = {
+                                user:userInDistress,
+                                action:'distress'
+                            }
+                            ws.send(JSON.stringify(obj));
+                            console.log("sending user data to hospital")
+                            hospitalActive = false;
+                        }
+                           
+                    }
+                   
+                }, 1000);
+            }
             else {
                 console.log("sending 404");
                 ws.send('404');
             }
         }).catch(error => console.log(error));
     })
+     
+    
+
 
     ws.on('close', () => {
         console.log('signinhospital WebSocket was closed');
+        hospitalActive=false;
     })
 })
 
