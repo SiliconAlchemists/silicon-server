@@ -196,6 +196,9 @@ app.ws('/signinwsambulance', (ws, req) => {
 
 let userInDistress = null;
 let userInDistressCoords = null;
+userInterval1 =null;
+let driverObj;
+let helpFound =false;
 app.ws('/sos', (ws, req) => {
 
     ws.on('open', function open() {
@@ -216,12 +219,20 @@ app.ws('/sos', (ws, req) => {
                     latitude: sosData.latitude,
                     longitude: sosData.longitude
                 };
+                userInterval1= setInterval( () =>{
+                    if(helpFound){
+                        ws.send(JSON.stringify(driverObj));
+                        helpFound = false;
+                    }
+                    clearInterval(userInterval1);
+                })
             }
         }).catch(error => console.log(error));
     })
 
     ws.on('close', () => {
         console.log('sigin sos WebSocket was closed')
+        clearInterval(userInterval1);
     })
 });
 
@@ -250,7 +261,9 @@ app.ws('/driverReady', (ws, req) => {
             }, 500)
         } else if (msgObj.status == 'locationResponse') {
             console.log("got a location response!!");
-            let driverObj = {
+            driverObj = {
+                name:"Akshay",
+                phone:'8057464687',
                 email: msgObj.email,
                 latitude: msgObj.latitude,
                 longitude: msgObj.longitude
@@ -272,6 +285,7 @@ app.ws('/driverReady', (ws, req) => {
                 latitude:userInDistressCoords.latitude,
                 longitude:userInDistressCoords.longitude,  
             }
+            helpFound = true;
             console.log("sending confirmation of user:", confirmationObj);
             ws.send(JSON.stringify(confirmationObj));
 
@@ -323,7 +337,7 @@ app.ws('/getGyro', (ws, req) => {
 
             gyroIntervalId = setInterval(() => {
                 let gyroDataObject = {
-                    data: gyroData,
+                    data: gyroData.slice(0,50),
                     turn:turn
                 };
                 if (gyroData.length >= 50) {
@@ -359,24 +373,35 @@ let bi = [];
 let started=null;
 let cleartestgyro;
 let count= 0;
+lastKnownMl=0;
 app.ws('/getGyroPhoneTest', (ws, req) => {
 
     ws.on('message', msg => {
         
         let gyroObj = JSON.parse(msg);
-        // console.log("getGyroPhoneTest received: ", gyroData);
-        let {x,y,z} = gyroObj;
-        let magnitude =  Math.sqrt( x*x +y*y + z*z);
-        // console.log(magnitude)
-        console.log("gyrotest", magnitude);
-        gyroData.push(magnitude);
-        // let magnitude = JSON.parse(msg).magnitude;
-        if(started==null){
-            cleartestgyro = setInterval(() =>{
-                ws.send('hello');
-            },100);
-            started = true;
+        if(gyroObj.action == 'gyro'){
+            let {x,y,z} = gyroObj;
+            let magnitude =  Math.sqrt( x*x +y*y + z*z);
+            // console.log(magnitude)
+            
+            gyroData.push(magnitude);
+            // let magnitude = JSON.parse(msg).magnitude;
+            if(started==null){
+                cleartestgyro = setInterval(() =>{
+                    ws.send('hello');
+                },100);
+                started = true;
+            }
+        } else if(gyroObj.action == 'result'){
+            console.log(gyroObj.value, 'ml');
+            lastKnownMl=gyroObj.value;
+        } else if (gyroObj.action == 'browser'){
+            setInterval(()=>{
+                ws.send(`${lastKnownMl}`);
+            } ,1000)
         }
+        // console.log("getGyroPhoneTest received: ", gyroData);
+       
        
     })
 
