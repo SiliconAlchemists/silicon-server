@@ -1,12 +1,27 @@
 import websocket
+import pickle
+import numpy as np
+import json;
 try:
     import thread
 except ImportError:
     import _thread as thread
 import time
 
+filename = 'finalized_fall_model.sav';
+model = pickle.load(open(filename,'rb') )
+
+
 def on_message(ws, message):
+    # obj = json.loads(message)
+    # x = obj['data']
+    # x2 = np.array([x])
+    # x2.reshape(-1,1)
+    # print(x2)
+    # print(model.predict(x2))
+    # print('test')
     print(message)
+
 
 def on_error(ws, error):
     print(error)
